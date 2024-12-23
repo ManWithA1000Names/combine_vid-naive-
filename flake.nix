@@ -9,7 +9,11 @@
       let
         pkgs = import nixpkgs { inherit system; };
         buildInputs = [ pkgs.deno  ];
-      in {
+      in rec {
         devShell = pkgs.mkShell { inherit buildInputs; };
+        packages.combine_vid = pkgs.writeScriptBin "combine_vid" ''
+          ${pkgs.deno}/bin/deno -A ${./main.ts} "$@"
+        '';
+        packages.default = packages.combine_vid;
       });
 }
