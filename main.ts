@@ -32,7 +32,7 @@ async function trim_file(opt: {file: string, start?: string, end?: string}): Pro
   const filename: string = insert_before_extension(opt.file, insertion);
   try {
     if ((await Deno.stat(filename)).isFile) {
-      console.log('processing file:', opt.file);
+      console.log('processed file:', opt.file);
       return filename;
     }
   } catch {
