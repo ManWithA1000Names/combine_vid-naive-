@@ -7,6 +7,17 @@ function insert_before_extension(path: string, insertion: string): string {
          + ext;
 }
 
+function chunkArray<T>(array: T[], chunkSize: number = 5): T[][] {
+  const result: T[][] = [];
+  
+  // Loop through the original array and chunk it into smaller arrays
+  for (let i = 0; i < array.length; i += chunkSize) {
+    result.push(array.slice(i, i + chunkSize));
+  }
+
+  return result;
+}
+
 /**
  * Trims the file returning the new outputted file name.
  *
@@ -77,13 +88,20 @@ async function main(args: string[]): Promise<void> {
     return JSON.parse(decoder.decode(await Deno.readFile(file)));
   }))).flat();
 
-  // each arg is json file with options inside it.
-  const contents = (await Promise.all(options.map(trim_file))).map((file) =>{
+
+  const chunked_options = chunkArray(options);
+
+  const contents_array = [];
+  for (const chunk of chunked_options) {
+    const files = await Promise.all(chunk.map(trim_file));
+    contents_array.push(...files.map((file) => {
       const absPath = Deno.realPathSync(file).replace(/\\/g, '/');
       return `file '${absPath}'`;
-  }).join('\n');
+    }))
+  }
 
-  console.log(contents);
+  const contents = contents_array.join('\n');
+
   await Deno.writeTextFile('temp_ffmpeg_input.txt', contents);
   const cmd = new Deno.Command("ffmpeg", {
     args: [
