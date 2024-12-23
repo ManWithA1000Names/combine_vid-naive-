@@ -1,5 +1,7 @@
 import {extname} from "node:path";
 
+let debug = false;
+
 function insert_before_extension(path: string, insertion: string): string {
   const ext = extname(path);
   return path.slice(0,path.length-ext.length)
@@ -67,7 +69,7 @@ async function trim_file(opt: {file: string, start?: string, end?: string}): Pro
   const cmd = new Deno.Command('ffmpeg', {
     args,
     stdout: "null",
-    stderr: "null",
+    stderr: debug ? "inherit" : "null",
   });
   console.log('processing file:', opt.file);
   const status = await cmd.spawn().status;
@@ -83,8 +85,11 @@ async function main(args: string[]): Promise<void> {
     return;
   }
 
+  debug = args.includes('-d') || args.includes('--debug');
+
   const decoder = new TextDecoder();
   const options = (await Promise.all(args.map(async (file) => {
+    if (file.startsWith('-')) return [];
     return JSON.parse(decoder.decode(await Deno.readFile(file)));
   }))).flat();
 
