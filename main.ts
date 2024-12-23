@@ -59,7 +59,10 @@ async function trim_file(opt: {file: string, start?: string, end?: string}): Pro
     stderr: "null",
   });
   console.log('processing file:', opt.file);
-  await cmd.spawn().status;
+  const status = await cmd.spawn().status;
+  if (!status.success) {
+    throw new Error(`Failed to process file: ${opt.file}`);
+  }
   return filename;
 }
 
@@ -74,8 +77,7 @@ async function main(args: string[]): Promise<void> {
     return JSON.parse(decoder.decode(await Deno.readFile(file)));
   }))).flat();
 
-  // each arg is: file;starttime;endtime;
-  // with both start time and end time being optional.
+  // each arg is json file with options inside it.
   const contents = (await Promise.all(options.map(trim_file))).map((file) =>{
       const absPath = Deno.realPathSync(file).replace(/\\/g, '/');
       return `file '${absPath}'`;
